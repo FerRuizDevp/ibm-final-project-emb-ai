@@ -1,24 +1,39 @@
-from flask import Flask, request, jsonify, redirect, url_for
+"""
+Flask server for the Emotion Detection App.
+"""
+
+from flask import Flask, request, redirect, url_for
 from EmotionDetection import emotion_detector
 
 app = Flask(__name__)
 
-# Redirect home route to /emotionDetector with a default text
+
 @app.route("/")
 def home():
+    """
+    Redirect root route to /emotion_detector with a default text.
+    """
     default_text = "I think I am having fun"
-    return redirect(url_for('emotionDetector', text=default_text))
+    return redirect(url_for("emotion_detector_route", text=default_text))
+
 
 @app.route("/emotionDetector")
-def emotionDetector():
+def emotion_detector_route():
+    """
+    Handle the /emotionDetector route.
+    Takes user text input as query parameter,
+    calls the emotion_detector function, and returns formatted results.
+    """
     text = request.args.get("text", "").strip()
-    if not text:
-        text = "I think I am having fun"  # default sentence
 
-    # Call your emotion detection function
-    result = emotion_detector(text)
+    # Call emotion detection function
+    result, status_code = emotion_detector(text)
 
-    # Format the response as requested
+    # Handle blank or invalid input
+    if status_code == 400 or result["dominant_emotion"] is None:
+        return "Invalid text! Please try again!", 400
+
+    # Format the response
     formatted_response = (
         f"For the given statement, the system response is "
         f"'anger': {result['anger']}, "
@@ -30,6 +45,6 @@ def emotionDetector():
     )
     return formatted_response
 
+
 if __name__ == "__main__":
-    # Run the app on all network interfaces on port 5000
     app.run(host="0.0.0.0", port=5000)
